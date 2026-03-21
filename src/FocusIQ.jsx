@@ -1,32 +1,43 @@
 import { useState, useEffect, useRef } from "react";
 
 const BRAIN_STATES = {
-  focused: { label: "Flow State Active", color: "#22C55E", bg: "#F0FDF4", border: "#BBF7D0", icon: "🧠", desc: "Deep concentration detected" },
-  unfocused: { label: "Attention Drift", color: "#F59E0B", bg: "#FFFBEB", border: "#FDE68A", icon: "⚡", desc: "Attention drifting — refocus" },
-  fatigued: { label: "Neural Fatigue", color: "#EF4444", bg: "#FEF2F2", border: "#FECACA", icon: "💤", desc: "Cognitive load peaking" },
+  focused:  { label: "Very Focused", color: "#22C55E", bg: "#F0FDF4", border: "#BBF7D0", icon: "🧠", desc: "25–60% · Deep concentration" },
+  unfocused:{ label: "Mid Focus",    color: "#F59E0B", bg: "#FFFBEB", border: "#FDE68A", icon: "⚡", desc: "13–24% · Moderate attention" },
+  fatigued: { label: "Not Focused",  color: "#EF4444", bg: "#FEF2F2", border: "#FECACA", icon: "💤", desc: "0–12% · Low cognitive engagement" },
 };
 
 const DIFFICULTY = { easy: "Easy", medium: "Medium", hard: "Hard" };
 
 const QUESTIONS = {
   easy: [
-    { q: "If f(x) = 2x + 3, what is f(5)?", options: ["10", "13", "15", "8"], correct: 1, hint: "Substitute x = 5 into the equation." },
-    { q: "What is the slope of the line y = 4x − 7?", options: ["4", "-7", "7", "-4"], correct: 0, hint: "In y = mx + b, the slope is m." },
-    { q: "Simplify: 3x + 2x − x", options: ["4x", "5x", "6x", "3x"], correct: 0, hint: "Combine like terms by adding the coefficients." },
-    { q: "What is 25% of 80?", options: ["15", "20", "25", "40"], correct: 1, hint: "Multiply 80 by 0.25." },
+    { q: "A store sells a jacket for $120 after applying a 20% discount. What was the original price?", options: ["$140", "$144", "$150", "$160"], correct: 2, hint: "If the discounted price is 80% of the original, divide $120 by 0.8." },
+    { q: "The equation 3x − 7 = 14 is solved for x. What is the value of x?", options: ["3", "5", "7", "9"], correct: 2, hint: "Add 7 to both sides, then divide by 3." },
+    { q: "Line l passes through (0, 4) and (2, 8). Which equation represents line l?", options: ["y = 2x + 4", "y = 4x + 2", "y = 2x − 4", "y = x + 4"], correct: 0, hint: "Slope = (8−4)/(2−0) = 2. Use y = mx + b with point (0, 4)." },
+    { q: "A car travels 150 miles in 2.5 hours. At the same speed, how far does it travel in 4 hours?", options: ["200 miles", "220 miles", "240 miles", "260 miles"], correct: 2, hint: "Find the unit rate (miles per hour), then multiply by 4." },
+    { q: "If 5(x + 2) = 35, what is the value of x + 2?", options: ["5", "6", "7", "8"], correct: 2, hint: "Divide both sides by 5 directly." },
+    { q: "The sum of three consecutive integers is 48. What is the largest integer?", options: ["14", "15", "16", "17"], correct: 3, hint: "Let the integers be n, n+1, n+2. Set their sum equal to 48." },
+    { q: "A rectangle has a perimeter of 54 cm. If its length is 17 cm, what is its width?", options: ["8 cm", "10 cm", "12 cm", "20 cm"], correct: 1, hint: "Perimeter = 2(length + width). Solve for width." },
+    { q: "If y = 3x − 5 and x = 4, what is y?", options: ["5", "7", "8", "17"], correct: 1, hint: "Substitute x = 4 into the equation." },
   ],
   medium: [
-    { q: "If f(x) = (x² − 4)/(x − 2), what is lim x→2 f(x)?", options: ["0", "4", "2", "Undefined"], correct: 1, hint: "Factor the numerator: x² − 4 = (x+2)(x−2)." },
-    { q: "Find the derivative of f(x) = 3x² − 2x + 1", options: ["6x − 2", "3x − 2", "6x + 1", "6x² − 2"], correct: 0, hint: "Apply the power rule: d/dx(xⁿ) = nxⁿ⁻¹." },
-    { q: "What is the area under y = 2x from x = 0 to x = 3?", options: ["6", "9", "12", "3"], correct: 1, hint: "Integrate 2x: ∫2x dx = x². Evaluate from 0 to 3." },
-    { q: "Solve: log₂(x) = 5", options: ["10", "25", "32", "64"], correct: 2, hint: "If log₂(x) = 5, then x = 2⁵." },
+    { q: "The function f(x) = x² − 6x + 8 equals zero at x = 2. What is the other solution?", options: ["x = 3", "x = 4", "x = 5", "x = 6"], correct: 1, hint: "Factor: (x − 2)(x − 4) = 0." },
+    { q: "A school's enrollment increased from 800 to 1,000 students over 4 years. What was the percent increase?", options: ["20%", "22.5%", "25%", "30%"], correct: 2, hint: "Percent increase = (change / original) × 100." },
+    { q: "In the xy-plane, which of the following is an equation of a circle centered at (3, −2) with radius 5?", options: ["(x−3)² + (y+2)² = 5", "(x+3)² + (y−2)² = 25", "(x−3)² + (y+2)² = 25", "(x−3)² + (y−2)² = 25"], correct: 2, hint: "Circle formula: (x − h)² + (y − k)² = r²." },
+    { q: "If 2x + y = 10 and x − y = 2, what is the value of x?", options: ["2", "3", "4", "5"], correct: 2, hint: "Add the two equations to eliminate y." },
+    { q: "A line has slope −3/4 and passes through (8, 1). What is the y-intercept?", options: ["5", "6", "7", "8"], correct: 2, hint: "Use y − y₁ = m(x − x₁), then set x = 0." },
+    { q: "The table shows f(1)=2, f(2)=5, f(3)=10, f(4)=17. Which formula fits f(x)?", options: ["f(x) = 3x − 1", "f(x) = x² + 1", "f(x) = 2x + 1", "f(x) = x² − 1"], correct: 1, hint: "Try f(x) = x² + 1: f(1)=2, f(2)=5, f(3)=10 ✓" },
+    { q: "Tickets to a concert cost $12 for students and $20 for adults. If 300 tickets were sold for $4,400, how many student tickets were sold?", options: ["100", "150", "175", "200"], correct: 2, hint: "Set up a system: s + a = 300 and 12s + 20a = 4400." },
+    { q: "If x² − 9 = 0, what are all values of x?", options: ["x = 3 only", "x = −3 only", "x = ±3", "x = ±9"], correct: 2, hint: "Factor as (x+3)(x−3) = 0, or take the square root of both sides." },
   ],
   hard: [
-    { q: "Evaluate: ∫₀^π sin(x) dx", options: ["0", "1", "2", "π"], correct: 2, hint: "The antiderivative of sin(x) is −cos(x)." },
-    // Fixed: corrupted options array reconstructed
-    { q: "Find the second derivative of f(x) = e²ˣ", options: ["2e²ˣ", "4e²ˣ", "e²ˣ", "2xe²ˣ"], correct: 1, hint: "First derivative: 2e²ˣ. Apply chain rule again." },
-    { q: "What is the sum of the series Σ(1/2ⁿ) from n=0 to ∞?", options: ["1", "2", "∞", "1/2"], correct: 1, hint: "Geometric series with a=1 and r=1/2. Sum = a/(1−r)." },
-    { q: "If det(A) = 3 and det(B) = −2, what is det(AB)?", options: ["-6", "1", "5", "-1"], correct: 0, hint: "det(AB) = det(A) × det(B)." },
+    { q: "The polynomial p(x) = x³ − 5x² + 2x + 8 has a factor (x − 4). What are the remaining factors?", options: ["(x − 1)(x + 2)", "(x + 1)(x − 2)", "(x − 2)(x + 1)", "(x + 2)(x − 1)"], correct: 0, hint: "Divide p(x) by (x − 4) using synthetic division, then factor the quotient." },
+    { q: "In the xy-plane, the parabola y = (x − 3)² − 4 intersects the x-axis at two points. What is the distance between those points?", options: ["2", "4", "6", "8"], correct: 1, hint: "Set y = 0 and solve. The roots are x = 3 ± 2." },
+    { q: "If sin θ = 3/5 and θ is in the first quadrant, what is tan θ?", options: ["3/4", "4/5", "3/5", "4/3"], correct: 0, hint: "Use the Pythagorean identity to find cos θ = 4/5, then tan θ = sin θ / cos θ." },
+    { q: "A data set has mean 50 and standard deviation 8. Approximately what percent of values fall between 34 and 66?", options: ["68%", "76%", "95%", "99.7%"], correct: 2, hint: "34 and 66 are 2 standard deviations from the mean. Apply the empirical rule." },
+    { q: "If f(x) = 2x + 1 and g(x) = x² − 3, what is f(g(3))?", options: ["10", "11", "12", "13"], correct: 3, hint: "First compute g(3) = 9 − 3 = 6, then f(6) = 2(6) + 1." },
+    { q: "The system y = x² − 4x + 4 and y = 2x − 4 intersects at how many points?", options: ["0", "1", "2", "3"], correct: 1, hint: "Substitute 2x − 4 into the quadratic and check the discriminant." },
+    { q: "A geometric sequence starts 4, 12, 36, … What is the 6th term?", options: ["324", "972", "2916", "972"], correct: 1, hint: "Common ratio r = 3. 6th term = 4 × 3⁵." },
+    { q: "Which value of k makes kx² − 8x + 4 = 0 have exactly one real solution?", options: ["k = 2", "k = 4", "k = 8", "k = 16"], correct: 1, hint: "One real solution means discriminant = 0: b² − 4ac = 64 − 16k = 0." },
   ],
 };
 
@@ -50,15 +61,12 @@ const EEG_BANDS = [
   { name: "Gamma", freq: 4.5, amp: 0.3, color: "#C2410C", width: 1.6, opacity: 0.6 },
 ];
 
-function BrainwaveEEG({ state }) {
+function BrainwaveEEG({ state, bandValues }) {
   const canvasRef = useRef(null);
   const animRef = useRef(null);
+  const bandValuesRef = useRef(bandValues);
+  useEffect(() => { bandValuesRef.current = bandValues; }, [bandValues]);
 
-  const stateMultipliers = {
-    focused:   { Delta: 0.3, Theta: 0.4, Alpha: 1.0, Beta: 0.9, Gamma: 0.7 },
-    unfocused: { Delta: 0.6, Theta: 0.9, Alpha: 0.5, Beta: 0.4, Gamma: 0.3 },
-    fatigued:  { Delta: 1.0, Theta: 0.8, Alpha: 0.3, Beta: 0.2, Gamma: 0.15 },
-  };
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -74,7 +82,12 @@ function BrainwaveEEG({ state }) {
       if (!running) return;
       ctx.clearRect(0, 0, W, H);
       const t = Date.now() / 1000;
-      const mults = stateMultipliers[state] || stateMultipliers.focused;
+      const bv = bandValuesRef.current;
+      // idle: flat near-zero waves when no BLE connected
+      const idleMults = { Delta: 0.04, Theta: 0.04, Alpha: 0.04, Beta: 0.04, Gamma: 0.04 };
+      const mults = bv
+        ? { Delta: Math.max(0.05, (bv.delta || 0) / 100), Theta: Math.max(0.05, (bv.theta || 0) / 100), Alpha: Math.max(0.05, (bv.alpha || 0) / 100), Beta: Math.max(0.05, (bv.beta || 0) / 100), Gamma: Math.max(0.05, (bv.gamma || 0) / 100) }
+        : idleMults;
 
       EEG_BANDS.forEach((band) => {
         const mult = mults[band.name] || 0.5;
@@ -125,9 +138,8 @@ export default function FocusIQ() {
   const windowWidth = useWindowSize();
   const isMobile = windowWidth < 768;
   const isTablet = windowWidth < 1024;
-
   const [brainState, setBrainState] = useState("focused");
-  const [focusScore, setFocusScore] = useState(85);
+  const [focusScore, setFocusScore] = useState(0);
   const [difficulty, setDifficulty] = useState("medium");
   const [qIndex, setQIndex] = useState(0);
   const [selected, setSelected] = useState(null);
@@ -139,45 +151,75 @@ export default function FocusIQ() {
   // Fixed: was "ueDuration, setFatigueDuration]" — missing "const [fatigu" prefix
   const [fatigueDuration, setFatigueDuration] = useState(0);
   const [breakSnoozed, setBreakSnoozed] = useState(false);
-  const [alertPlaying, setAlertPlaying] = useState(false);
   const [stateHistory, setStateHistory] = useState([]);
   const [breakActive, setBreakActive] = useState(false);
   const [breakTimeLeft, setBreakTimeLeft] = useState(300);
+  const [showEasierPrompt, setShowEasierPrompt] = useState(false);
+  const [easierPromptSnoozedAt, setEasierPromptSnoozedAt] = useState(null);
+  const [showLockInModal, setShowLockInModal] = useState(false);
+  const lockInDismissedAt = useRef(null);
+  const [bleConnected, setBleConnected] = useState(false);
+  const [bleStatus, setBleStatus] = useState("disconnected"); // "disconnected" | "connecting" | "connected"
+  const [bandValues, setBandValues] = useState(null);
   const breakTimerRef = useRef(null);
+  const bleDeviceRef = useRef(null);
+  const focusHistoryRef = useRef([]);
+
 
   useEffect(() => { const iv = setInterval(() => setSessionTime((t) => t + 1), 1000); return () => clearInterval(iv); }, []);
 
-  useEffect(() => {
-    const cycle = () => {
-      const states = ["focused", "focused", "focused", "unfocused", "fatigued"];
-      const next = states[Math.floor(Math.random() * states.length)];
-      setBrainState(next);
-      setStateHistory(prev => [...prev.slice(-29), { state: next, time: Date.now() }]);
-      if (next === "focused") { setFocusScore((s) => Math.min(98, s + Math.floor(Math.random() * 8 + 2))); setFatigueDuration(0); setBreakSnoozed(false); }
-      else if (next === "unfocused") { setFocusScore((s) => Math.max(30, s - Math.floor(Math.random() * 10 + 3))); setFatigueDuration(0); }
-      else { setFocusScore((s) => Math.max(15, s - Math.floor(Math.random() * 12 + 5))); }
-    };
-    const iv = setInterval(cycle, 6000); return () => clearInterval(iv);
-  }, []);
 
+  // Only auto-upgrade difficulty when focused; never auto-downgrade
   useEffect(() => {
     if (brainState === "focused") setDifficulty((d) => d === "easy" ? "medium" : "hard");
-    else if (brainState === "fatigued") setDifficulty("easy");
-    else setDifficulty("medium");
   }, [brainState]);
 
+  // Reset prompts on each new question
   useEffect(() => {
-    if (brainState === "fatigued") { const t = setTimeout(() => setShowHint(true), 1500); return () => clearTimeout(t); }
-    else setShowHint(false);
-  }, [brainState, qIndex]);
+    setShowHint(false);
+    setShowEasierPrompt(false);
+    setEasierPromptSnoozedAt(null);
+  }, [qIndex]);
+
+  // Drive hint/stuck/rest popups from accumulated low-focus duration
+  useEffect(() => {
+    if (brainState === "focused") {
+      // Full recovery — clear everything
+      setShowHint(false);
+      setShowEasierPrompt(false);
+      return;
+    }
+    // Show popups once thresholds are crossed (Mid Focus pauses counter but keeps state)
+    if (fatigueDuration >= 15 && !showHint) setShowHint(true);
+    const snoozed = easierPromptSnoozedAt !== null && fatigueDuration < easierPromptSnoozedAt + 60;
+    if (fatigueDuration >= 30 && !showEasierPrompt && !snoozed) setShowEasierPrompt(true);
+  }, [fatigueDuration, brainState, showHint, showEasierPrompt, easierPromptSnoozedAt]);
 
   useEffect(() => {
-    if (brainState === "fatigued") { breakTimerRef.current = setInterval(() => setFatigueDuration((d) => d + 1), 1000); }
-    else { setFatigueDuration(0); if (breakTimerRef.current) clearInterval(breakTimerRef.current); }
+    if (brainState === "fatigued") {
+      breakTimerRef.current = setInterval(() => setFatigueDuration((d) => d + 1), 1000);
+      let lockInTimer = null;
+      if (bleConnected) {
+        const now = Date.now();
+        const cooldownOk = !lockInDismissedAt.current || (now - lockInDismissedAt.current >= 60000);
+        if (cooldownOk) {
+          setShowLockInModal(true);
+          lockInTimer = setTimeout(() => { setShowLockInModal(false); lockInDismissedAt.current = Date.now(); }, 3500);
+        }
+      }
+      return () => { clearInterval(breakTimerRef.current); if (lockInTimer) clearTimeout(lockInTimer); };
+    } else if (brainState === "focused") {
+      // Only reset counter on full recovery (Very Focused), not on Mid Focus bounce
+      setFatigueDuration(0);
+      if (breakTimerRef.current) clearInterval(breakTimerRef.current);
+    } else {
+      // Mid Focus: stop the counter but keep the accumulated duration
+      if (breakTimerRef.current) clearInterval(breakTimerRef.current);
+    }
     return () => { if (breakTimerRef.current) clearInterval(breakTimerRef.current); };
   }, [brainState]);
 
-  useEffect(() => { if (fatigueDuration >= 8 && !breakSnoozed && !showBreakModal && !breakActive) setShowBreakModal(true); }, [fatigueDuration, breakSnoozed, showBreakModal, breakActive]);
+  useEffect(() => { if (fatigueDuration >= 45 && !breakSnoozed && !showBreakModal && !breakActive) setShowBreakModal(true); }, [fatigueDuration, breakSnoozed, showBreakModal, breakActive]);
 
   useEffect(() => {
     if (!breakActive) return;
@@ -194,35 +236,92 @@ export default function FocusIQ() {
     return () => clearTimeout(t);
   }, [breakActive, breakTimeLeft]);
 
-  useEffect(() => {
-    if (brainState === "unfocused") {
-      setAlertPlaying(true);
-      try {
-        const ctx = new (window.AudioContext || window.webkitAudioContext)();
-        const osc = ctx.createOscillator(); const gain = ctx.createGain();
-        osc.type = "sine"; osc.frequency.value = 880;
-        gain.gain.setValueAtTime(0.12, ctx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.4);
-        osc.connect(gain).connect(ctx.destination); osc.start(); osc.stop(ctx.currentTime + 0.4);
-        setTimeout(() => {
-          const o2 = ctx.createOscillator(); const g2 = ctx.createGain();
-          o2.type = "sine"; o2.frequency.value = 1100;
-          g2.gain.setValueAtTime(0.12, ctx.currentTime);
-          g2.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.3);
-          o2.connect(g2).connect(ctx.destination); o2.start(); o2.stop(ctx.currentTime + 0.3);
-        }, 200);
-      } catch (e) {}
-      const t = setTimeout(() => setAlertPlaying(false), 1500); return () => clearTimeout(t);
+
+  const handleBLENotification = (event) => {
+    const raw = new TextDecoder().decode(event.target.value);
+    if (!raw.startsWith("S:")) return;
+    const parts = raw.substring(2).split(",");
+    if (parts.length < 6) return;
+    const [g, b, a, t, d] = parts.map(Number);
+    const focusPct = parts.length >= 8 ? Number(parts[6]) : -1;
+
+    setBandValues({ gamma: g, beta: b, alpha: a, theta: t, delta: d });
+
+    if (focusPct < 0) {
+      setFocusScore(0);
+      return;
     }
-  }, [brainState]);
+
+    // Display raw value unchanged
+    setFocusScore(focusPct);
+
+    // Use a 5-reading rolling average for state to prevent single-packet noise flips
+    const history = focusHistoryRef.current;
+    history.push(focusPct);
+    if (history.length > 5) history.shift();
+    const avg = history.reduce((s, v) => s + v, 0) / history.length;
+
+    let nextState;
+    if      (avg >= 25) nextState = "focused";   // Very Focused: 25–60
+    else if (avg >= 13) nextState = "unfocused"; // Mid Focus: 13–24
+    else                nextState = "fatigued";  // Not Focused: 0–12
+    setBrainState(nextState);
+    setStateHistory(prev => {
+      const last = prev[prev.length - 1];
+      if (last && last.state === nextState) return prev; // dedupe identical consecutive states
+      return [...prev.slice(-29), { state: nextState, time: Date.now() }];
+    });
+  };
+
+  const connectBLE = async () => {
+    if (bleConnected) {
+      try { bleDeviceRef.current?.gatt?.disconnect(); } catch (_) {}
+      setBleConnected(false);
+      setBleStatus("disconnected");
+      setBandValues(null);
+      setFocusScore(0);
+      focusHistoryRef.current = [];
+      return;
+    }
+    setBleStatus("connecting");
+    try {
+      const device = await navigator.bluetooth.requestDevice({
+        filters: [{ services: ["6910123a-eb0d-4c35-9a60-bebe1dcb549d"] }],
+      });
+      bleDeviceRef.current = device;
+      device.addEventListener("gattserverdisconnected", () => {
+        setBleConnected(false);
+        setBleStatus("disconnected");
+        setBandValues(null);
+        setFocusScore(0);
+        focusHistoryRef.current = [];
+      });
+      const server = await device.gatt.connect();
+      const service = await server.getPrimaryService("6910123a-eb0d-4c35-9a60-bebe1dcb549d");
+      const char = await service.getCharacteristic("5f4f1107-7fc1-43b2-a540-0aa1a9f1ce78");
+      await char.startNotifications();
+      char.addEventListener("characteristicvaluechanged", handleBLENotification);
+      setBleConnected(true);
+      setBleStatus("connected");
+    } catch (e) {
+      setBleStatus("disconnected");
+    }
+  };
 
   const currentQ = QUESTIONS[difficulty][qIndex % QUESTIONS[difficulty].length];
-  const handleAnswer = (i) => setSelected(i);
-  const confirmAnswer = () => {
-    if (selected === null) return;
+  const handleAnswer = (i) => {
+    if (selected !== null) return;
+    setSelected(i);
     setAnswered((a) => a + 1);
-    if (selected === currentQ.correct) setCorrect((c) => c + 1);
-    setTimeout(() => { setSelected(null); setShowHint(false); setQIndex((q) => q + 1); }, 800);
+    if (i === currentQ.correct) setCorrect((c) => c + 1);
+    setTimeout(() => { setSelected(null); setShowHint(false); setShowEasierPrompt(false); setQIndex((q) => q + 1); }, 1200);
+  };
+  const switchToEasier = () => {
+    setDifficulty("easy");
+    setShowHint(false);
+    setShowEasierPrompt(false);
+    setSelected(null);
+    setQIndex((q) => q + 1);
   };
 
   const st = BRAIN_STATES[brainState];
@@ -250,24 +349,42 @@ export default function FocusIQ() {
             </div>
           </div>
         </div>
-        <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-          <SessionTimer seconds={sessionTime} />
-          <span style={{ fontSize: 18, cursor: "pointer" }}>🔔</span>
+        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+          <button onClick={connectBLE} style={{
+            display: "flex", alignItems: "center", gap: 6,
+            padding: "6px 12px", borderRadius: 8, border: "1px solid #E8D5BE",
+            background: bleConnected ? "#FFF7ED" : "#FFFDF8",
+            color: bleConnected ? "#C2500A" : "#A08870",
+            fontSize: 11, fontWeight: 700, cursor: "pointer", fontFamily: "inherit",
+          }}>
+            <div style={{
+              width: 7, height: 7, borderRadius: "50%", flexShrink: 0,
+              background: bleStatus === "connected" ? "#22C55E" : bleStatus === "connecting" ? "#F59E0B" : "#D4B896",
+              animation: bleStatus === "connecting" ? "blinker 1s infinite" : "none",
+            }} />
+            {bleStatus === "connected" ? "EEG Live" : bleStatus === "connecting" ? "Connecting…" : "Connect EEG"}
+          </button>
           <div style={{ width: 32, height: 32, borderRadius: "50%", background: "linear-gradient(135deg, #C2500A, #B45309)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 700, color: "#fff" }}>S</div>
         </div>
       </header>
 
       {/* Main Content */}
-      <div style={{ flex: 1, display: "flex", flexDirection: isMobile ? "column" : "row", padding: isMobile ? 12 : 16, gap: isMobile ? 12 : 16, overflow: "auto" }}>
-        {/* Left: Question area */}
-        <div style={{ flex: 1, minWidth: 0 }}>
+      <div style={{ flex: 1, display: "flex", flexDirection: "column", padding: isMobile ? 12 : 16, gap: isMobile ? 12 : 16, overflow: "auto" }}>
+
+        {/* Full-width heading */}
+        <div>
           <span style={{ fontSize: 10, letterSpacing: 2, color: "#C2500A", fontWeight: 700, textTransform: "uppercase" }}>Current Session: Advanced Calculus &amp; SAT Prep</span>
-          <h1 style={{ fontFamily: "'Playfair Display', Georgia, serif", fontSize: isMobile ? 20 : 24, fontWeight: 700, color: "#1C120A", marginBottom: 12, marginTop: 4, lineHeight: 1.2 }}>
+          <h1 style={{ fontFamily: "'Playfair Display', Georgia, serif", fontSize: isMobile ? 20 : 24, fontWeight: 700, color: "#1C120A", marginBottom: 0, marginTop: 4, lineHeight: 1.2 }}>
             Mastering <em style={{ color: "#C2500A", fontStyle: "italic" }}>Cognitive</em> Flow.
           </h1>
+        </div>
 
+        {/* Two-column row — both cards start flush at the same height */}
+        <div style={{ display: "flex", flexDirection: isMobile ? "column" : "row", alignItems: "flex-start", gap: isMobile ? 12 : 16 }}>
+        {/* Left: Question area */}
+        <div style={{ flex: 1, minWidth: 0 }}>
           {/* Question Card */}
-          <div style={{ background: "#FFFDF8", borderRadius: 16, padding: isMobile ? 14 : 20, border: "1px solid #E8D5BE", boxShadow: "0 1px 3px rgba(0,0,0,0.04), 0 4px 12px rgba(0,0,0,0.02)", animation: "slideIn 0.35s ease" }}>
+          <div style={{ background: "#FFFDF8", borderRadius: 16, padding: isMobile ? 24 : 36, border: "1px solid #E8D5BE", boxShadow: "0 1px 3px rgba(0,0,0,0.04), 0 4px 12px rgba(0,0,0,0.02)", animation: "slideIn 0.35s ease" }}>
             <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "space-between", alignItems: "center", gap: 8, marginBottom: 12 }}>
               <span style={{ background: "#FFF7ED", color: "#C2500A", padding: "5px 14px", borderRadius: 6, fontSize: 10, fontWeight: 700, letterSpacing: 1.5, textTransform: "uppercase", border: "1px solid #FED7AA" }}>Mathematics Section</span>
               <span style={{ fontSize: 12, color: "#A08870" }}>
@@ -276,21 +393,7 @@ export default function FocusIQ() {
               </span>
             </div>
 
-            <p style={{ fontSize: isMobile ? 15 : 18, lineHeight: 1.65, color: "#1C120A", marginBottom: 6, fontWeight: 600 }}>{currentQ.q}</p>
-            <p style={{ fontSize: 13, color: "#A08870", marginBottom: 14, fontWeight: 500 }}>
-              {brainState === "focused" ? "You're in the zone. Challenge yourself." : brainState === "unfocused" ? "⚡ Attention drift detected — focus on this." : "Take it slow. A hint is available below."}
-            </p>
-
-            {showHint && (
-              <div style={{ background: "#FFFBEB", border: "1px solid #FDE68A", borderRadius: 10, padding: "12px 16px", marginBottom: 18, animation: "fadeScale 0.3s ease", fontSize: 13, color: "#92400E", display: "flex", gap: 10, alignItems: "flex-start" }}>
-                <span style={{ fontSize: 16, flexShrink: 0 }}>💡</span>
-                {/* Fixed: was "<div              <div style=" — missing closing > on outer div */}
-                <div>
-                  <div style={{ fontWeight: 700, marginBottom: 3, fontSize: 10, textTransform: "uppercase", letterSpacing: 1, color: "#B45309" }}>Hint — Fatigue Detected</div>
-                  {currentQ.hint}
-                </div>
-              </div>
-            )}
+            <p style={{ fontSize: isMobile ? 15 : 18, lineHeight: 1.65, color: "#1C120A", marginBottom: 18, fontWeight: 600 }}>{currentQ.q}</p>
 
             <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
               {currentQ.options.map((opt, i) => {
@@ -314,38 +417,48 @@ export default function FocusIQ() {
               })}
             </div>
 
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 14 }}>
-              <button style={{ background: "none", border: "none", color: "#A08870", fontSize: 13, cursor: "pointer", fontFamily: "inherit", fontWeight: 600 }}>Save for Review</button>
-              <button onClick={confirmAnswer} disabled={selected === null} style={{
-                padding: "11px 28px", borderRadius: 10, border: "none",
-                background: selected !== null ? "linear-gradient(135deg, #C2500A, #9A3D07)" : "#E8D5BE",
-                color: selected !== null ? "#fff" : "#A08870", fontSize: 14, fontWeight: 700,
-                cursor: selected !== null ? "pointer" : "default", fontFamily: "inherit",
-                boxShadow: selected !== null ? "0 4px 12px rgba(194,80,10,0.25)" : "none", transition: "all 0.25s",
-              }}>Confirm Answer</button>
-            </div>
           </div>
 
-          {alertPlaying && (
-            <div style={{ marginTop: 14, padding: "12px 18px", borderRadius: 10, background: "#FFFBEB", border: "1px solid #FDE68A", animation: "shake 0.3s ease 2", display: "flex", alignItems: "center", gap: 12 }}>
-              <span style={{ fontSize: 20 }}>🔔</span>
-              <div>
-                <div style={{ fontWeight: 700, color: "#B45309", fontSize: 13 }}>Attention Alert!</div>
-                <div style={{ fontSize: 12, color: "#92400E" }}>Brain signals indicate drifting focus. Lock back in!</div>
-              </div>
+          {/* Popups — horizontal row below card, no effect on card height */}
+          {(showHint || showEasierPrompt) && (
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 10, marginTop: 10 }}>
+              {showHint && !showEasierPrompt && (
+                <div style={{ flex: "1 1 auto", minWidth: 200, padding: "10px 14px", borderRadius: 10, background: "#FFFBEB", border: "1px solid #FDE68A", animation: "fadeScale 0.3s ease", display: "flex", alignItems: "flex-start", gap: 8 }}>
+                  <span style={{ fontSize: 15, flexShrink: 0 }}>💡</span>
+                  <div>
+                    <div style={{ fontWeight: 700, fontSize: 10, textTransform: "uppercase", letterSpacing: 1, color: "#B45309", marginBottom: 2 }}>Hint</div>
+                    <div style={{ fontSize: 11, color: "#92400E", lineHeight: 1.5 }}>{currentQ.hint}</div>
+                  </div>
+                </div>
+              )}
+              {showEasierPrompt && (
+                <div style={{ flex: "1 1 auto", minWidth: 220, padding: "10px 14px", borderRadius: 10, background: "#FFF7ED", border: "1px solid #FED7AA", animation: "fadeScale 0.3s ease", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                    <span style={{ fontSize: 15, flexShrink: 0 }}>🧩</span>
+                    <div>
+                      <div style={{ fontWeight: 700, fontSize: 11, color: "#C2500A" }}>Still stuck?</div>
+                      <div style={{ fontSize: 11, color: "#92400E", marginTop: 1 }}>Switch to an easier question?</div>
+                    </div>
+                  </div>
+                  <div style={{ display: "flex", gap: 6, flexShrink: 0 }}>
+                    <button onClick={() => { setShowEasierPrompt(false); setEasierPromptSnoozedAt(fatigueDuration); }} style={{ padding: "5px 10px", borderRadius: 6, border: "1px solid #FED7AA", background: "none", color: "#A08870", fontSize: 10, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>Stay</button>
+                    <button onClick={switchToEasier} style={{ padding: "5px 10px", borderRadius: 6, border: "none", background: "linear-gradient(135deg, #C2500A, #9A3D07)", color: "#fff", fontSize: 10, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>Switch</button>
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </div>
 
         {/* ─── Right Panel ─── */}
-        <div style={{ width: isMobile ? "100%" : isTablet ? 260 : 300, flexShrink: 0, display: "flex", flexDirection: "column", gap: 10 }}>
+        <div style={{ width: isMobile ? "100%" : isTablet ? 260 : 300, flexShrink: 0, display: "flex", flexDirection: "column", gap: 10, position: isMobile ? "static" : "sticky", top: 16, alignSelf: "flex-start" }}>
           {/* EEG Brain State Card */}
           <div style={{
             background: "#F5EDD8", borderRadius: 18, padding: 18,
             position: "relative", overflow: "hidden",
             boxShadow: "0 4px 24px rgba(30,14,4,0.1)", border: "1px solid #E8D5BE",
           }}>
-            {/* Fixed: was "pointerEvent>" — incomplete style prop and missing closing */}
+            {bleConnected ? (<>
             <div style={{ position: "absolute", top: "40%", left: "50%", transform: "translate(-50%,-50%)", width: 200, height: 200, borderRadius: "50%", background: `radial-gradient(circle, ${st.color}10, transparent)`, pointerEvents: "none" }} />
 
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 4, position: "relative" }}>
@@ -365,7 +478,7 @@ export default function FocusIQ() {
 
             {/* 5-Band EEG Canvas Waveform */}
             <div style={{ margin: "10px -8px 10px", position: "relative" }}>
-              <BrainwaveEEG state={brainState} />
+              <BrainwaveEEG state={brainState} bandValues={bandValues} />
             </div>
 
             {/* Focus Score */}
@@ -390,29 +503,26 @@ export default function FocusIQ() {
                 </div>
               ))}
             </div>
-          </div>
-
-          {/* State indicator */}
-          <div style={{ background: "#FFFDF8", borderRadius: 12, padding: 12, border: `1px solid ${st.border}`, display: "flex", alignItems: "center", gap: 10, boxShadow: "0 1px 3px rgba(0,0,0,0.04)" }}>
-            <div style={{ width: 40, height: 40, borderRadius: 10, background: st.bg, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18, border: `1px solid ${st.border}` }}>{st.icon}</div>
-            <div>
-              <div style={{ fontSize: 13, fontWeight: 700, color: st.color }}>{st.label}</div>
-              <div style={{ fontSize: 11.5, color: "#A08870", marginTop: 1, fontWeight: 500 }}>{st.desc}</div>
-            </div>
-          </div>
-
-          {/* Break recommendation */}
-          {brainState === "fatigued" && (
-            <div style={{ background: "#FEF2F2", borderRadius: 12, padding: 12, border: "1px solid #FECACA", animation: "fadeScale 0.3s ease", display: "flex", alignItems: "flex-start", gap: 10 }}>
-              <div style={{ width: 36, height: 36, borderRadius: 8, background: "#FEE2E2", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14, border: "1px solid #FECACA", flexShrink: 0 }}>⚠️</div>
-              <div>
-                <div style={{ fontSize: 12, fontWeight: 700, color: "#DC2626" }}>Break Recommended</div>
-                <div style={{ fontSize: 11, color: "#7F1D1D", marginTop: 2, lineHeight: 1.5 }}>Cognitive load peaking. Rest window in <strong>15m</strong>.</div>
-                {/* Fixed: was "setBreoozed" — typo, should be setBreakSnoozed */}
-                <button onClick={() => setBreakSnoozed(true)} style={{ marginTop: 6, background: "none", border: "none", color: "#C2500A", fontSize: 10, fontWeight: 700, letterSpacing: 1, cursor: "pointer", fontFamily: "inherit", textTransform: "uppercase" }}>Snooze Alert</button>
+            </>) : (
+            <>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 12, position: "relative" }}>
+                <div>
+                  <h3 style={{ fontSize: 18, fontWeight: 800, color: "#1C120A", lineHeight: 1.15, marginBottom: 2 }}>Mental<br/>Strength</h3>
+                  <div style={{ fontSize: 10, letterSpacing: 2, color: "#D4B896", textTransform: "uppercase", fontWeight: 600 }}>No Connection</div>
+                </div>
+                <span style={{ padding: "6px 14px", borderRadius: 8, fontSize: 11, fontWeight: 700, background: "#EDE0D020", color: "#D4B896", border: "1px solid #E8D5BE", lineHeight: 1.3, textAlign: "center" }}>
+                  Offline
+                </span>
               </div>
-            </div>
-          )}
+              <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "24px 0", position: "relative" }}>
+                <div style={{ fontSize: 36, fontWeight: 900, color: "#D4B896", lineHeight: 1, fontFamily: "'Nunito', sans-serif" }}>--%</div>
+                <div style={{ fontSize: 10, letterSpacing: 2, color: "#D4B896", textTransform: "uppercase", fontWeight: 600, marginTop: 6 }}>Focus Score</div>
+                <div style={{ fontSize: 11, color: "#A08870", marginTop: 12, fontWeight: 500 }}>Connect your EEG device to begin tracking</div>
+              </div>
+            </>
+            )}
+          </div>
+
 
           {/* Progress */}
           <div style={{ background: "#FFFDF8", borderRadius: 12, padding: 12, border: "1px solid #E8D5BE", boxShadow: "0 1px 3px rgba(0,0,0,0.04)" }}>
@@ -451,6 +561,7 @@ export default function FocusIQ() {
             </div>
           </div>
         </div>
+        </div> {/* end two-column row */}
       </div>
 
       {/* Break Overlay */}
@@ -468,6 +579,17 @@ export default function FocusIQ() {
             <div style={{ height: "100%", borderRadius: 3, background: "linear-gradient(90deg, #F59E0B, #C2500A)", width: `${((300 - breakTimeLeft) / 300) * 100}%`, transition: "width 1s linear" }} />
           </div>
           <button onClick={() => { setBreakActive(false); setBreakTimeLeft(300); setBreakSnoozed(true); }} style={{ marginTop: 8, background: "none", border: "1px solid #E8D5BE", borderRadius: 8, padding: "8px 20px", color: "#A08870", fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>Skip Break</button>
+        </div>
+      )}
+
+      {/* Lock In Modal — auto-dismisses after 3.5s */}
+      {showLockInModal && (
+        <div style={{ position: "fixed", inset: 0, zIndex: 1001, background: "rgba(30,14,4,0.5)", backdropFilter: "blur(6px)", display: "flex", alignItems: "center", justifyContent: "center", animation: "fadeScale 0.25s ease" }} onClick={() => { setShowLockInModal(false); lockInDismissedAt.current = Date.now(); }}>
+          <div style={{ background: "#1C0A04", borderRadius: 20, padding: 36, border: "1px solid #7F1D1D", maxWidth: 380, width: "90%", textAlign: "center", boxShadow: "0 20px 60px rgba(0,0,0,0.4)" }}>
+            <div style={{ width: 56, height: 56, borderRadius: "50%", margin: "0 auto 18px", background: "#EF4444", border: "2px solid #FCA5A5", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 24 }}>🔴</div>
+            <h2 style={{ fontSize: 28, fontWeight: 900, color: "#fff", marginBottom: 8, letterSpacing: 2, textTransform: "uppercase", fontFamily: "'Nunito', sans-serif" }}>Lock In!</h2>
+            <p style={{ fontSize: 13, color: "#FCA5A5", lineHeight: 1.6, fontWeight: 500 }}>Focus score dropped below 13%. Redirect your attention to the question now.</p>
+          </div>
         </div>
       )}
 
