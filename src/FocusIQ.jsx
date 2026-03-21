@@ -174,22 +174,25 @@ export default function FocusIQ() {
     if (brainState === "focused") setDifficulty((d) => d === "easy" ? "medium" : "hard");
   }, [brainState]);
 
-  // Reset prompts on each new question
+  // Reset prompts and fatigue counter on each new question
   useEffect(() => {
     setShowHint(false);
     setShowEasierPrompt(false);
     setEasierPromptSnoozedAt(null);
+    setFatigueDuration(0);
   }, [qIndex]);
 
-  // Drive hint/stuck/rest popups from accumulated low-focus duration
+  // Drive hint/stuck/rest popups from accumulated mid-focus duration
   useEffect(() => {
-    if (brainState === "focused") {
-      // Full recovery — clear everything
-      setShowHint(false);
-      setShowEasierPrompt(false);
+    if (brainState !== "unfocused") {
+      // Only show popups in mid focus; clear all popups on recovery
+      if (brainState === "focused") {
+        setShowHint(false);
+        setShowEasierPrompt(false);
+      }
       return;
     }
-    // Show popups once thresholds are crossed (Mid Focus pauses counter but keeps state)
+    // Show popups at thresholds during mid focus
     if (fatigueDuration >= 15 && !showHint) setShowHint(true);
     const snoozed = easierPromptSnoozedAt !== null && fatigueDuration < easierPromptSnoozedAt + 60;
     if (fatigueDuration >= 30 && !showEasierPrompt && !snoozed) setShowEasierPrompt(true);
@@ -197,29 +200,27 @@ export default function FocusIQ() {
 
   useEffect(() => {
     if (brainState === "fatigued") {
+      // Not Focused: count up and show lock-in alert
       breakTimerRef.current = setInterval(() => setFatigueDuration((d) => d + 1), 1000);
-      let lockInTimer = null;
       if (bleConnected) {
-        const now = Date.now();
-        const cooldownOk = !lockInDismissedAt.current || (now - lockInDismissedAt.current >= 60000);
-        if (cooldownOk) {
-          setShowLockInModal(true);
-          lockInTimer = setTimeout(() => { setShowLockInModal(false); lockInDismissedAt.current = Date.now(); }, 3500);
-        }
+        setShowLockInModal(true);
       }
-      return () => { clearInterval(breakTimerRef.current); if (lockInTimer) clearTimeout(lockInTimer); };
-    } else if (brainState === "focused") {
-      // Only reset counter on full recovery (Very Focused), not on Mid Focus bounce
-      setFatigueDuration(0);
-      if (breakTimerRef.current) clearInterval(breakTimerRef.current);
+      return () => { clearInterval(breakTimerRef.current); };
+    } else if (brainState === "unfocused") {
+      setShowLockInModal(false);
+      // Mid Focus: start counting for hint/stuck/break popups
+      breakTimerRef.current = setInterval(() => setFatigueDuration((d) => d + 1), 1000);
+      return () => { clearInterval(breakTimerRef.current); };
     } else {
-      // Mid Focus: stop the counter but keep the accumulated duration
+      // Very Focused: full recovery — reset everything
+      setShowLockInModal(false);
+      setFatigueDuration(0);
       if (breakTimerRef.current) clearInterval(breakTimerRef.current);
     }
     return () => { if (breakTimerRef.current) clearInterval(breakTimerRef.current); };
   }, [brainState]);
 
-  useEffect(() => { if (fatigueDuration >= 45 && !breakSnoozed && !showBreakModal && !breakActive) setShowBreakModal(true); }, [fatigueDuration, breakSnoozed, showBreakModal, breakActive]);
+  useEffect(() => { if (brainState === "unfocused" && fatigueDuration >= 45 && !breakSnoozed && !showBreakModal && !breakActive) setShowBreakModal(true); }, [fatigueDuration, brainState, breakSnoozed, showBreakModal, breakActive]);
 
   useEffect(() => {
     if (!breakActive) return;
@@ -239,19 +240,24 @@ export default function FocusIQ() {
 
   const handleBLENotification = (event) => {
     const raw = new TextDecoder().decode(event.target.value);
+    console.log("[BLE RAW]", raw);
     if (!raw.startsWith("S:")) return;
     const parts = raw.substring(2).split(",");
+    console.log("[BLE PARTS]", parts, "length:", parts.length);
     if (parts.length < 6) return;
     const [g, b, a, t, d] = parts.map(Number);
     const focusPct = parts.length >= 8 ? Number(parts[6]) : -1;
+    console.log("[BLE] focusPct:", focusPct, "| bands:", { g, b, a, t, d });
 
     setBandValues({ gamma: g, beta: b, alpha: a, theta: t, delta: d });
 
     if (focusPct < 0) {
+      console.log("[BLE] No focusPct in packet, setting score to 0");
       setFocusScore(0);
       return;
     }
 
+    console.log("[BLE] Setting focusScore to", focusPct);
     // Display raw value unchanged
     setFocusScore(focusPct);
 
@@ -318,8 +324,7 @@ export default function FocusIQ() {
   };
   const switchToEasier = () => {
     setDifficulty("easy");
-    setShowHint(false);
-    setShowEasierPrompt(false);
+    setQIndex((q) => q + 1);
     setSelected(null);
     setQIndex((q) => q + 1);
   };
@@ -380,11 +385,11 @@ export default function FocusIQ() {
         </div>
 
         {/* Two-column row — both cards start flush at the same height */}
-        <div style={{ display: "flex", flexDirection: isMobile ? "column" : "row", alignItems: "flex-start", gap: isMobile ? 12 : 16 }}>
+        <div style={{ display: "flex", flexDirection: isMobile ? "column" : "row", alignItems: "stretch", gap: isMobile ? 12 : 16 }}>
         {/* Left: Question area */}
-        <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column" }}>
           {/* Question Card */}
-          <div style={{ background: "#FFFDF8", borderRadius: 16, padding: isMobile ? 24 : 36, border: "1px solid #E8D5BE", boxShadow: "0 1px 3px rgba(0,0,0,0.04), 0 4px 12px rgba(0,0,0,0.02)", animation: "slideIn 0.35s ease" }}>
+          <div style={{ background: "#FFFDF8", borderRadius: 16, padding: isMobile ? 24 : 36, border: "1px solid #E8D5BE", boxShadow: "0 1px 3px rgba(0,0,0,0.04), 0 4px 12px rgba(0,0,0,0.02)", animation: "slideIn 0.35s ease", flex: 1 }}>
             <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "space-between", alignItems: "center", gap: 8, marginBottom: 12 }}>
               <span style={{ background: "#FFF7ED", color: "#C2500A", padding: "5px 14px", borderRadius: 6, fontSize: 10, fontWeight: 700, letterSpacing: 1.5, textTransform: "uppercase", border: "1px solid #FED7AA" }}>Mathematics Section</span>
               <span style={{ fontSize: 12, color: "#A08870" }}>
@@ -419,39 +424,10 @@ export default function FocusIQ() {
 
           </div>
 
-          {/* Popups — horizontal row below card, no effect on card height */}
-          {(showHint || showEasierPrompt) && (
-            <div style={{ display: "flex", flexWrap: "wrap", gap: 10, marginTop: 10 }}>
-              {showHint && !showEasierPrompt && (
-                <div style={{ flex: "1 1 auto", minWidth: 200, padding: "10px 14px", borderRadius: 10, background: "#FFFBEB", border: "1px solid #FDE68A", animation: "fadeScale 0.3s ease", display: "flex", alignItems: "flex-start", gap: 8 }}>
-                  <span style={{ fontSize: 15, flexShrink: 0 }}>💡</span>
-                  <div>
-                    <div style={{ fontWeight: 700, fontSize: 10, textTransform: "uppercase", letterSpacing: 1, color: "#B45309", marginBottom: 2 }}>Hint</div>
-                    <div style={{ fontSize: 11, color: "#92400E", lineHeight: 1.5 }}>{currentQ.hint}</div>
-                  </div>
-                </div>
-              )}
-              {showEasierPrompt && (
-                <div style={{ flex: "1 1 auto", minWidth: 220, padding: "10px 14px", borderRadius: 10, background: "#FFF7ED", border: "1px solid #FED7AA", animation: "fadeScale 0.3s ease", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                    <span style={{ fontSize: 15, flexShrink: 0 }}>🧩</span>
-                    <div>
-                      <div style={{ fontWeight: 700, fontSize: 11, color: "#C2500A" }}>Still stuck?</div>
-                      <div style={{ fontSize: 11, color: "#92400E", marginTop: 1 }}>Switch to an easier question?</div>
-                    </div>
-                  </div>
-                  <div style={{ display: "flex", gap: 6, flexShrink: 0 }}>
-                    <button onClick={() => { setShowEasierPrompt(false); setEasierPromptSnoozedAt(fatigueDuration); }} style={{ padding: "5px 10px", borderRadius: 6, border: "1px solid #FED7AA", background: "none", color: "#A08870", fontSize: 10, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>Stay</button>
-                    <button onClick={switchToEasier} style={{ padding: "5px 10px", borderRadius: 6, border: "none", background: "linear-gradient(135deg, #C2500A, #9A3D07)", color: "#fff", fontSize: 10, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>Switch</button>
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
         </div>
 
         {/* ─── Right Panel ─── */}
-        <div style={{ width: isMobile ? "100%" : isTablet ? 260 : 300, flexShrink: 0, display: "flex", flexDirection: "column", gap: 10, position: isMobile ? "static" : "sticky", top: 16, alignSelf: "flex-start" }}>
+        <div style={{ width: isMobile ? "100%" : isTablet ? 260 : 300, flexShrink: 0, display: "flex", flexDirection: "column", gap: 10, minHeight: 0, overflow: "hidden" }}>
           {/* EEG Brain State Card */}
           <div style={{
             background: "#F5EDD8", borderRadius: 18, padding: 18,
@@ -505,7 +481,7 @@ export default function FocusIQ() {
             </div>
             </>) : (
             <>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 12, position: "relative" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 4, position: "relative" }}>
                 <div>
                   <h3 style={{ fontSize: 18, fontWeight: 800, color: "#1C120A", lineHeight: 1.15, marginBottom: 2 }}>Mental<br/>Strength</h3>
                   <div style={{ fontSize: 10, letterSpacing: 2, color: "#D4B896", textTransform: "uppercase", fontWeight: 600 }}>No Connection</div>
@@ -514,10 +490,28 @@ export default function FocusIQ() {
                   Offline
                 </span>
               </div>
-              <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "24px 0", position: "relative" }}>
-                <div style={{ fontSize: 36, fontWeight: 900, color: "#D4B896", lineHeight: 1, fontFamily: "'Nunito', sans-serif" }}>--%</div>
-                <div style={{ fontSize: 10, letterSpacing: 2, color: "#D4B896", textTransform: "uppercase", fontWeight: 600, marginTop: 6 }}>Focus Score</div>
-                <div style={{ fontSize: 11, color: "#A08870", marginTop: 12, fontWeight: 500 }}>Connect your EEG device to begin tracking</div>
+
+              {/* Placeholder matching EEG waveform height */}
+              <div style={{ margin: "10px -8px 10px", height: 120, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <div style={{ fontSize: 11, color: "#D4B896", fontWeight: 500 }}>Connect your EEG device to begin tracking</div>
+              </div>
+
+              {/* Focus Score */}
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", position: "relative" }}>
+                <div>
+                  <div style={{ fontSize: 36, fontWeight: 900, color: "#D4B896", lineHeight: 1, fontFamily: "'Nunito', sans-serif", opacity: 0.35 }}>--%</div>
+                  <div style={{ fontSize: 10, letterSpacing: 2, color: "#D4B896", textTransform: "uppercase", fontWeight: 600, marginTop: 2 }}>Focus Score</div>
+                </div>
+              </div>
+
+              {/* Band legend placeholder */}
+              <div style={{ display: "flex", gap: 8, marginTop: 10, flexWrap: "wrap" }}>
+                {EEG_BANDS.map((b) => (
+                  <div key={b.name} style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                    <div style={{ width: 8, height: 3, borderRadius: 2, background: "#D4B896" }} />
+                    <span style={{ fontSize: 9, color: "#D4B896", fontWeight: 500 }}>{b.name}</span>
+                  </div>
+                ))}
               </div>
             </>
             )}
@@ -525,7 +519,7 @@ export default function FocusIQ() {
 
 
           {/* Progress */}
-          <div style={{ background: "#FFFDF8", borderRadius: 12, padding: 12, border: "1px solid #E8D5BE", boxShadow: "0 1px 3px rgba(0,0,0,0.04)" }}>
+          <div style={{ background: "#FFFDF8", borderRadius: 12, padding: 12, border: "1px solid #E8D5BE", boxShadow: "0 1px 3px rgba(0,0,0,0.04)", flex: 1, display: "flex", flexDirection: "column", justifyContent: "center" }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
               <span style={{ fontSize: 10, letterSpacing: 1.5, color: "#A08870", textTransform: "uppercase", fontWeight: 700 }}>Daily Goal Progress</span>
               <span style={{ fontSize: 13, fontWeight: 800, color: "#1C120A", fontFamily: "'DM Mono', monospace" }}>{Math.min(100, Math.round((answered / 25) * 100))}%</span>
@@ -542,26 +536,38 @@ export default function FocusIQ() {
             )}
           </div>
 
-          {/* State history */}
-          <div style={{ background: "#FFFDF8", borderRadius: 12, padding: 12, border: "1px solid #E8D5BE", boxShadow: "0 1px 3px rgba(0,0,0,0.04)" }}>
-            <div style={{ fontSize: 10, letterSpacing: 1.5, color: "#A08870", textTransform: "uppercase", fontWeight: 700, marginBottom: 10 }}>Recent Brain States</div>
-            <div style={{ display: "flex", gap: 3, flexWrap: "wrap" }}>
-              {stateHistory.slice(-30).map((h, i) => (
-                <div key={i} title={BRAIN_STATES[h.state].label} style={{ width: 15, height: 15, borderRadius: 3, background: BRAIN_STATES[h.state].bg, border: `1px solid ${BRAIN_STATES[h.state].border}` }} />
-              ))}
-              {stateHistory.length === 0 && <span style={{ fontSize: 11, color: "#D4B896" }}>Collecting data...</span>}
-            </div>
-            <div style={{ display: "flex", gap: 14, marginTop: 10 }}>
-              {Object.entries(BRAIN_STATES).map(([k, v]) => (
-                <div key={k} style={{ display: "flex", alignItems: "center", gap: 4 }}>
-                  <div style={{ width: 8, height: 8, borderRadius: 2, background: v.color }} />
-                  <span style={{ fontSize: 10, color: "#A08870", fontWeight: 500 }}>{v.label.split(" ")[0]}</span>
-                </div>
-              ))}
-            </div>
-          </div>
         </div>
         </div> {/* end two-column row */}
+
+        {/* Popups — full width below both columns */}
+        {(showHint || showEasierPrompt) && (
+          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+            {showHint && !showEasierPrompt && (
+              <div style={{ padding: "20px 28px", borderRadius: 14, background: "#FFFBEB", border: "2px solid #FDE68A", animation: "fadeScale 0.3s ease", display: "flex", alignItems: "flex-start", gap: 16 }}>
+                <span style={{ fontSize: 30, flexShrink: 0 }}>💡</span>
+                <div>
+                  <div style={{ fontWeight: 700, fontSize: 14, textTransform: "uppercase", letterSpacing: 1.5, color: "#B45309", marginBottom: 4 }}>Hint</div>
+                  <div style={{ fontSize: 16, color: "#92400E", lineHeight: 1.6 }}>{currentQ.hint}</div>
+                </div>
+              </div>
+            )}
+            {showEasierPrompt && (
+              <div style={{ padding: "20px 28px", borderRadius: 14, background: "#FFF7ED", border: "2px solid #FED7AA", animation: "fadeScale 0.3s ease", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                  <span style={{ fontSize: 24, flexShrink: 0 }}>🧩</span>
+                  <div>
+                    <div style={{ fontWeight: 700, fontSize: 16, color: "#C2500A" }}>Still stuck?</div>
+                    <div style={{ fontSize: 14, color: "#92400E", marginTop: 2 }}>Switch to an easier question?</div>
+                  </div>
+                </div>
+                <div style={{ display: "flex", gap: 8, flexShrink: 0 }}>
+                  <button onClick={() => { setShowEasierPrompt(false); setEasierPromptSnoozedAt(fatigueDuration); }} style={{ padding: "8px 16px", borderRadius: 8, border: "1px solid #FED7AA", background: "none", color: "#A08870", fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>Stay</button>
+                  <button onClick={switchToEasier} style={{ padding: "8px 16px", borderRadius: 8, border: "none", background: "linear-gradient(135deg, #C2500A, #9A3D07)", color: "#fff", fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>Switch</button>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Break Overlay */}
@@ -584,7 +590,7 @@ export default function FocusIQ() {
 
       {/* Lock In Modal — auto-dismisses after 3.5s */}
       {showLockInModal && (
-        <div style={{ position: "fixed", inset: 0, zIndex: 1001, background: "rgba(30,14,4,0.5)", backdropFilter: "blur(6px)", display: "flex", alignItems: "center", justifyContent: "center", animation: "fadeScale 0.25s ease" }} onClick={() => { setShowLockInModal(false); lockInDismissedAt.current = Date.now(); }}>
+        <div style={{ position: "fixed", inset: 0, zIndex: 1001, background: "rgba(30,14,4,0.5)", backdropFilter: "blur(6px)", display: "flex", alignItems: "center", justifyContent: "center", animation: "fadeScale 0.25s ease" }}>
           <div style={{ background: "#1C0A04", borderRadius: 20, padding: 36, border: "1px solid #7F1D1D", maxWidth: 380, width: "90%", textAlign: "center", boxShadow: "0 20px 60px rgba(0,0,0,0.4)" }}>
             <div style={{ width: 56, height: 56, borderRadius: "50%", margin: "0 auto 18px", background: "#EF4444", border: "2px solid #FCA5A5", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 24 }}>🔴</div>
             <h2 style={{ fontSize: 28, fontWeight: 900, color: "#fff", marginBottom: 8, letterSpacing: 2, textTransform: "uppercase", fontFamily: "'Nunito', sans-serif" }}>Lock In!</h2>
