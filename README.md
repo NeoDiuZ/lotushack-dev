@@ -1,61 +1,61 @@
 <div align="center">
 
-# FocusIQ
+# 🧠 FocusIQ
 
 **Real-time EEG-powered adaptive learning platform**
 
-Built with React + Vite | Web Bluetooth API | Canvas API
+⚡ React + Vite | 📡 Web Bluetooth API | 🎨 Canvas API
 
 ---
 
 </div>
 
-## About
+## 📖 About
 
-FocusIQ is a cognitive learning tool that connects to an EEG headset via Web Bluetooth to monitor your brain's focus levels in real time. It dynamically adapts question difficulty based on your mental state, provides intelligent hints when you're struggling, and enforces healthy study habits with break reminders.
+FocusIQ is a cognitive learning tool that connects to an EEG headset via Web Bluetooth to monitor your brain's focus levels in real time. It dynamically adapts question difficulty based on your mental state, provides intelligent hints when you're struggling, and enforces healthy study habits with break reminders. 🎯
 
-## Features
+## ✨ Features
 
-### Adaptive Difficulty
+### 🎚️ Adaptive Difficulty
 Questions automatically scale in difficulty based on your EEG focus score. When your brain is locked in, the challenge ramps up. When focus dips, the system nudges you toward easier problems.
 
-### Real-Time Brain State Detection
+### 📊 Real-Time Brain State Detection
 Three focus states are tracked continuously:
-- **Very Focused** (25-60%) — Deep concentration detected
-- **Mid Focus** (13-24%) — Moderate attention, hints and prompts begin
-- **Not Focused** (0-12%) — Low engagement, lock-in alert triggered
+- 🟢 **Very Focused** (25–60%) — Deep concentration detected
+- 🟡 **Mid Focus** (13–24%) — Moderate attention, hints and prompts begin
+- 🔴 **Not Focused** (0–12%) — Low engagement, lock-in alert triggered
 
-### Lock-In Alert
-When focus drops to "Not Focused", an undismissable alert appears and stays until your brain state improves — keeping you accountable.
+### 🚨 Lock-In Alert
+When focus drops to "Not Focused", an alert appears and stays on screen until your brain state improves — keeping you accountable. No clicking out of this one! 🔒
 
 <div align="center">
 <img src="alert.gif" alt="Lock-in alert triggered on low focus" width="600"/>
 </div>
 
-### Smart Hint System
-After 15 seconds of mid focus, a contextual hint appears for the current question. After 30 seconds, a "Still Stuck?" prompt offers to switch to an easier question. After 45 seconds, a break is recommended.
+### 💡 Smart Hint System
+After 15 seconds of mid focus, a contextual hint appears for the current question. After 30 seconds, a 🧩 "Still Stuck?" prompt offers to switch to an easier question. After 45 seconds, a break is recommended. ☕
 
 <div align="center">
 <img src="hint.gif" alt="Hint and still stuck prompts during mid focus" width="600"/>
 </div>
 
-### 5-Band EEG Visualization
-A live canvas-rendered waveform displays Delta, Theta, Alpha, Beta, and Gamma brainwave activity from the EEG sensor.
+### 🌊 5-Band EEG Visualization
+A live canvas-rendered waveform displays Delta, Theta, Alpha, Beta, and Gamma brainwave activity from the EEG sensor in real time.
 
-### Break Enforcement
-When sustained low focus is detected, the app recommends a 5-minute break with a full-screen timer overlay to help your brain recover.
+### 😴 Break Enforcement
+When sustained low focus is detected, the app recommends a 5-minute break with a full-screen timer overlay to help your brain recover. Rest up! 🌿
 
-## Tech Stack
+## 🛠️ Tech Stack
 
 | Layer | Technology |
 |-------|-----------|
-| UI Framework | React |
-| Build Tool | Vite |
-| Styling | Inline CSS (no framework) |
-| EEG Connection | Web Bluetooth API |
-| Visualization | Canvas API |
+| 🖼️ UI Framework | React |
+| ⚡ Build Tool | Vite |
+| 🎨 Styling | Inline CSS (no framework) |
+| 📡 EEG Connection | Web Bluetooth API |
+| 📈 Visualization | Canvas API |
 
-## Getting Started
+## 🚀 Getting Started
 
 ```bash
 # Install dependencies
@@ -68,23 +68,23 @@ npm run dev
 npm run build
 ```
 
-### Deploy on Netlify
+### 🌐 Deploy on Netlify
 
 - **Build command:** `npm run build`
 - **Publish directory:** `dist`
 
-## How It Works
+## 🔬 How It Works
 
-1. Click **Connect EEG** to pair your Bluetooth EEG headset
-2. The app reads focus percentage and 5-band brainwave data in real time
-3. A rolling 5-reading average determines your brain state
-4. Questions, hints, and alerts adapt automatically based on your state
-5. Your daily goal progress and accuracy are tracked throughout the session
+1. 🔗 Click **Connect EEG** to pair your Bluetooth EEG headset
+2. 📡 The app reads focus percentage and 5-band brainwave data in real time
+3. 📊 A rolling 5-reading average determines your brain state
+4. 🧠 Questions, hints, and alerts adapt automatically based on your state
+5. 🏆 Your daily goal progress and accuracy are tracked throughout the session
 
 ---
 
 <div align="center">
 
-**Built for LotusHack**
+🪷 **Built for LotusHack** 🪷
 
 </div>
