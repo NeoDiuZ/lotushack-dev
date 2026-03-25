@@ -1,0 +1,26 @@
+// focusiq.gatt
+// FocusIQ BLE GATT database definition.
+// Processed by pico_btstack_make_gatt_header() in CMakeLists.txt
+// to produce focusiq.h containing profile_data[] and ATT handle macros.
+
+// ── Generic Access Profile (mandatory) ──────────────────────────────────
+PRIMARY_SERVICE, GAP_SERVICE
+CHARACTERISTIC, GAP_DEVICE_NAME, READ, "FocusIQ"
+CHARACTERISTIC, GAP_APPEARANCE,  READ, ""
+
+// ── Generic Attribute Profile (mandatory) ────────────────────────────────
+PRIMARY_SERVICE, GATT_SERVICE
+CHARACTERISTIC, GATT_SERVICE_CHANGED, INDICATE, ""
+
+// ── FocusIQ Custom Service ───────────────────────────────────────────────
+// Service UUID matches original FocusIQ.jsx: 6910123a-eb0d-4c35-9a60-bebe1dcb549d
+PRIMARY_SERVICE, 6910123a-eb0d-4c35-9a60-bebe1dcb549d
+
+// Data characteristic – browser subscribes (NOTIFY) for live data.
+// Firmware sends ASCII:  S:<gamma>,<beta>,<alpha>,<theta>,<delta>,<focus_pct>
+// UUID matches original FocusIQ.jsx: 5f4f1107-7fc1-43b2-a540-0aa1a9f1ce78
+CHARACTERISTIC, 5f4f1107-7fc1-43b2-a540-0aa1a9f1ce78, DYNAMIC | READ | NOTIFY, ""
+
+// Control characteristic – browser writes single-byte command codes.
+// UUID: 5f4f1107-7fc1-43b2-a540-0aa1a9f1ce79  (last byte differs)
+CHARACTERISTIC, 5f4f1107-7fc1-43b2-a540-0aa1a9f1ce79, DYNAMIC | WRITE_WITHOUT_RESPONSE | WRITE, ""
